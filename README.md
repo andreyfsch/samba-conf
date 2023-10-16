@@ -121,14 +121,56 @@ O Samba não possui scripts de System V init tais como *systemd* ou *upstart*.
 
 Para verificar que o DNS do AD foi configurado corretamente, execute algumas queries DNS:
 
-- Registro *_ldap* SRV tcp-based do domínio
+- Registro SRV *_ldap* tcp-based do domínio:
   ```
   host -t SRV _ldap._tcp.samdom.sbcb.inf.ufrgs.br.
   ```
-- Registro *_kerberos* SRV udp-based do domínio
+  Exemplo de output esperado:  
+  ```_ldap._tcp.samdom.sbcb.inf.ufrgs.br has SRV record 0 100 389 dc1.samdom.sbcb.inf.ufrgs.br.```
+- Registro SRV *_kerberos* udp-based do domínio:
   ```
   host -t SRV _kerberos._tcp.samdom.sbcb.inf.ufrgs.br.
   ```
+  Exemplo de output esperado:  
+  ```_kerberos._udp.samdom.sbcb.inf.ufrgs.br has SRV record 0 100 88 dc1.samdom.sbcb.inf.ufrgs.br.```
+- Registro A do DC:
+  ```
+  host -t A dc1.samdom.sbcb.inf.ufrgs.br.
+  ```
+  Exemplo de output esperado:  
+  ```dc1.samdom.sbcb.inf.ufrgs.br has address 143.54.0.1```
+- Registro PTR do DC:
+  ```
+  host -t PTR 143.54.0.1.
+  ```
+  Exemplo de output esperado:  
+  ```1.0.54.143.in-addr.arpa domain name pointer dc1.samdom.sbcb.inf.ufrgs.br```
+
+## Verificando o Kerberos
+
+Para este teste, solicite um tíquete Kerberos para o administrador de domínio.  
+Execute:
+
+```
+kinit administrator
+```
+Será solicitada a senha do administrador no formato:  
+```Password for administrator@SAMDOM.SBCB.INF.UFRGS.BR:```
+
+Após, liste os tíquetes Kerberos em cache executando:
+
+```
+klist
+```
+Exemplo de output esperado:  
+
+Ticket cache: FILE:/tmp/krb5cc_0  
+Default principal: administrator@SAMDOM.SBCB.INF.UFRGS.BR  
+  
+  Valid starting       Expires              Service principal  
+  01.11.2016 08:45:00  12.11.2016 18:45:00  krbtgt/SAMDOM.SBCB.INF.UFRGS.BR@SAMDOM.SBCB.INF.UFRGS.BR  
+  renew until 02.11.2016 08:44:59
+
   
 # Configuração e ingresso dos clientes no domínio AD
 
