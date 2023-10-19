@@ -141,7 +141,7 @@ Agora, realizaremos a configuração do chrony, iniciando pelas permissões de s
 chown root:_chrony /usr/local/samba/var/lib/ntp_signd/
 chmod 750 /usr/local/samba/var/lib/ntp_signd/
 ```
-Finalmente, devemos substituir o arquivo **/etc/chrony/chrony.conf**. Utilize [o arquivo chrony.conf no  repo] e , se necessário, edite os IPs.
+Finalmente, devemos substituir o arquivo **/etc/chrony/chrony.conf**. Utilize [o arquivo chrony.conf no  repo](chrony.conf) e , se necessário, edite os IPs.
 
 
 # Testando o ambiente
