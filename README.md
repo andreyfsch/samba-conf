@@ -141,7 +141,7 @@ Agora, realizaremos a configuração do chrony, iniciando pelas permissões de s
 chown root:_chrony /usr/local/samba/var/lib/ntp_signd/
 chmod 750 /usr/local/samba/var/lib/ntp_signd/
 ```
-Finalmente, devemos substituir o arquivo **/etc/chrony/chrony.conf**. Utilize [o arquivo chrony.conf no  repo](chrony.conf) e , se necessário, edite os IPs.
+Finalmente, devemos substituir o arquivo **/etc/chrony/chrony.conf**. Utilize [o arquivo chrony.conf no  repo](chrony-server.conf) e , se necessário, edite os IPs.
 
 
 # Testando o ambiente
@@ -249,6 +249,11 @@ Agora que o servidor DC AD foi configurado, precisamos configurar o Samba client
     CACHEDIR: /usr/local/samba/var/cache/
     PRIVATE_DIR: /usr/local/samba/private/
     ```
+## Instalação do Samba
+
+Proceda para a instalação do samba e suas dependências [realizando o procedimento descrito anteriormente](#instalação-do-samba).  
+A única diferença é que ao invés de **DC1** como hostname utilizado no kerberos, utilizaremos **DM1**, referente a *Domain Member*.
+
 ## Preparo do membro de domínio para ingresso no domínio AD
 
 ### Configurando o DNS
@@ -262,7 +267,37 @@ Configurando manualmente o cliente para utilizar o servidor DNS:
   nameserver 143.54.0.1
   search samdom.sbcb.inf.ufrgs.br
   ```
-  Alguns utilitários, como NetworkManager podem sobrescrever mudanças manuais no arquivo **etc/resolv.conf**.  
+- Alguns utilitários, como NetworkManager podem sobrescrever mudanças manuais no arquivo **etc/resolv.conf**.  
   No caso do NetworkManager, configure o servidor DNS via GUI ou nmcli e reinicie o serviço do NetworkManager.
-- 
 
+### Configuração do Kerberos
+
+Edite o arquivo **/etc/krb5.conf** com as seguintes diretivas:
+
+```
+[libdefaults]
+  default_realm = SAMDOM.SBCB.INF.UFRGS.BR
+  dns_lookup_realm = false
+  dns_lookup_kdc = true
+[plugins]
+  localauth = {
+    module = winbind:/usr/lib64/samba/krb5/winbind_krb5_localauth.so
+    enable_only = winbind
+  }
+```
+Verifique se o arquivo possui a diretiva *include* e, caso positivo, você **deve** removê-la.
+
+Edite também o arquivo **/etc/security/pam_winbind.conf** com a seguinte diretiva:
+```
+[global]
+  krb5_auth = yes
+  krb5_ccache_type = FILE
+```
+Por fim, execute o comando:
+```console
+update-crypto-policies --set DEFAULT:AD-SUPPORT
+```
+
+## Configurando a sincronização horária
+Instale o chrony seguindo as mesmas etapas [descritas anteriormente](configurando-o-serviço-de-sincronização-horária), porém não utilize o parâmetro *--enable-ntp-signd* na configuração.  
+Após, substitua o arquivo **/etc/chrony/chrony.conf** pelo [arquivo indicado no repo](chrony-client.conf), substituindo os endereços IP se necessário.
