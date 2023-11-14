@@ -249,11 +249,6 @@ Agora que o servidor DC AD foi configurado, precisamos configurar o Samba client
     CACHEDIR: /usr/local/samba/var/cache/
     PRIVATE_DIR: /usr/local/samba/private/
     ```
-## Instalação do Samba
-
-Proceda para a instalação do samba e suas dependências [realizando o procedimento descrito anteriormente](#instalação-do-samba).  
-A única diferença é que ao invés de **DC1** como hostname utilizado no kerberos, utilizaremos **DM1**, referente a *Domain Member*.
-
 ## Preparo do membro de domínio para ingresso no domínio AD
 
 ### Configurando o DNS
@@ -269,7 +264,46 @@ Configurando manualmente o cliente para utilizar o servidor DNS:
   ```
 - Alguns utilitários, como NetworkManager podem sobrescrever mudanças manuais no arquivo **etc/resolv.conf**.  
   No caso do NetworkManager, configure o servidor DNS via GUI ou nmcli e reinicie o serviço do NetworkManager.
+  Para realizar o procedimento via nmcli, execute:
+  ```console
+  nmcli connection modify $(nmcli --terse --fields NAME connection show --active | head -n 1) ipv4.ignore-auto-dns yes \
+   ipv4.dns-search samdom.sbcb.inf.ufrgs.br ipv4.dns 143.54.0.1
+  systemctl restart NetworkManager
+  ```
 
+### Testando a resolução DNS
+Execute:
+- Forward lookup:
+  ```console
+  nslookup DC1.samdom.sbcb.inf.ufrgs.br
+  ```
+  Deve ter um output semelhante a:
+  ```console
+  Server:         143.54.0.1
+  Address:        143.54.0.1#53
+  
+  Name:   DC1.samdom.sbcb.inf.ufrgs.br
+  Address: 143.54.0.1
+  ```
+- Reverse lookup:
+  ```console
+  nslookup 143.54.0.1
+  ```
+  Deve ter um output semelhante a:
+  ```console
+  Server:        143.54.0.1
+  Address:	10.99.0.1#53
+
+  1.0.54.143.in-addr.arpa	name = DC1.samdom.sbcb.inf.ufrgs.br.
+  ```
+- Registros SRV:
+  ```console
+  host -t SRV _ldap._tcp.samdom.sbcb.inf.ufrgs.br
+  ```
+  Deve ter um output semelhante a:
+  ```console
+  _ldap._tcp.samdom.sbcb.inf.ufrgs.br has SRV record 0 100 389 dc1.samdom.sbcb.inf.ufrgs.br.
+  ```
 ### Configuração do Kerberos
 
 Edite o arquivo **/etc/krb5.conf** com as seguintes diretivas:
@@ -301,3 +335,24 @@ update-crypto-policies --set DEFAULT:AD-SUPPORT
 ## Configurando a sincronização horária
 Instale o chrony seguindo as mesmas etapas [descritas anteriormente](configurando-o-serviço-de-sincronização-horária), porém não utilize o parâmetro *--enable-ntp-signd* na configuração.  
 Após, substitua o arquivo **/etc/chrony/chrony.conf** pelo [arquivo indicado no repo](chrony-client.conf), substituindo os endereços IP se necessário.
+
+## Resolução de hostname local
+Quando um host ingressa o domínio, o Samba tenta registrar o hostname na zona AD DNS. Para isso, o utilitário *net* precisa conseguir resolver o hostname utilizando DNS ou um registro correto no arquivo **/etc/hosts**.
+Para verificar que a resolução do hostname está correta, execute:
+```console
+getent hosts M1
+```
+O output deve ser semelhante a:
+```console
+143.54.0.5      M1.samdom.sbcb.inf.ufrgs.br    M1
+```
+Certifique-se de que o arquivo **/etc/hosts** contém apenas a linha:
+```console
+127.0.0.1      localhost
+```
+O FQDN não deve aparecer neste arquivo, pois estamos utilizando DHCP para obter nosso IP.
+
+## Instalação do Samba
+
+Proceda para a instalação do samba e suas dependências [realizando o procedimento descrito anteriormente](#instalação-do-samba).  
+A única diferença é que ao invés de **DC1** como hostname utilizado no kerberos, utilizaremos **DM1**, referente a *Domain Member*.
