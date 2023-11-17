@@ -367,3 +367,14 @@ Sendo o output semelhante a:
 ```console
 CONFIGFILE: /etc/samba/smb.conf
 ```
+Agora, renomeie o arquivo original e faça download do [o arquivo smb.conf repo](smb.conf).
+Execute:
+```console
+mv /etc/samba/smb.conf /etc/samba/smb.conf.old
+wget -O /etc/samba/smb.conf https://raw.githubusercontent.com/andreyfsch/samba-conf/main/smb.conf
+```
+A seguir, recarregue o samba, executando:
+```console
+smbcontrol all reload-config
+```
+
