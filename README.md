@@ -356,3 +356,14 @@ O FQDN não deve aparecer neste arquivo, pois estamos utilizando DHCP para obter
 
 Proceda para a instalação do samba e suas dependências [realizando o procedimento descrito anteriormente](#instalação-do-samba).  
 A única diferença é que ao invés de **DC1** como hostname utilizado no kerberos, utilizaremos **DM1**, referente a *Domain Member*.
+
+## Preparando o smb.conf
+
+Para localizar o arquivo smb.conf após a instalação, execute:
+```console
+smbd  -b | grep CONFIGFILE
+```
+Sendo o output semelhante a:
+```console
+CONFIGFILE: /etc/samba/smb.conf
+```
