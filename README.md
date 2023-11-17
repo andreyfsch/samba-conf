@@ -378,3 +378,13 @@ A seguir, recarregue o samba, executando:
 smbcontrol all reload-config
 ```
 
+## Mapeando o administrador de domínio ao usuário root local
+
+Para executar operações de arquivo no sistema de arquivos local como root, o Samba permite mapear usuários do domínio para usuários locais.  
+Já que a sessão *[global]* do arquivo **smb.conf** do nosso repo já possui a diretiva ```username map = /usr/local/samba/etc/user.map```, podemos seguir para o próximo passo.  
+Vamos mapear o usuário de domínio *Administartor* para o usuário local *root*, executando:
+
+```console
+echo "!root = SAMDOM\Administrator" >> /usr/local/samba/etc/user.map
+```
+
