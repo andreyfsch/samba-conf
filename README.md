@@ -216,6 +216,11 @@ Default principal: administrator@SAMDOM.SBCB.INF.UFRGS.BR
   01.11.2016 08:45:00  12.11.2016 18:45:00  krbtgt/SAMDOM.SBCB.INF.UFRGS.BR@SAMDOM.SBCB.INF.UFRGS.BR  
   renew until 02.11.2016 08:44:59
 ```
+
+# Autenticação de usuários de domínio utilizando PAM
+Para permitir que usuários de domínio se loguem localmente ou se autentiquem em serviços instalados no membro do domínio, como SSH, o PAM deve ser capaz de utilizar o módulo *pam_winbind*.
+
+
   
 # Configuração e ingresso dos clientes no domínio AD
 
@@ -388,3 +393,77 @@ Vamos mapear o usuário de domínio *Administartor* para o usuário local *root*
 echo "!root = SAMDOM\Administrator" >> /usr/local/samba/etc/user.map
 ```
 
+## Ingressando o host no domínio
+
+Para ingressar o host no AD, execute:
+
+```console
+samba-tool domain join samdom.sbcb.inf.ufrgs.br MEMBER -U administrator
+```
+
+Entre com a senha do usuário *Administrator* a seguir.  
+
+## Configurando o Name Service Switch (NSS)
+
+É necessário configurar o NSS para que usuários e grupos do domínio estejam disponíveis localmente.  
+Edite o arquivo **/etc/nsswitch.conf**, adicionando *windbind* nos databases **passwd** e **group**, da seguinte maneira:
+```console
+passwd: files winbind
+group:  files winbind
+```
+
+Se houver uma linha contendo a diretiva **initgroups**, adicione ```[success=continue] winbind``` ao final, mas não crie uma linha com a diretiva se ela não existir.
+
+Não utilize nomes de usuários iguais no domínio e no arquivo **/etc/passwd** local.
+
+## Inicializando serviços do Samba
+
+Execute:
+```console
+smbd
+nmdb
+winbind
+```
+Não inicialize o serviço **samba** no membro do domínio, este serviço deve ser inicializado somente no AD DC.
+
+## Testando a conectividade do Windbindd
+
+### Enviando um Ping Windbindd
+
+Para verificar que um serviço windbindd pode se conectar aos AD DC, execute:
+```console
+wbinfo --ping-dc
+```
+Que deve ter um output semelhante a:
+```console
+checking the NETLOGON for domain[SAMDOM] dc connection to "DC.SAMDOM.SBCB.INF.UFRGS.BR" succeeded
+```
+Se o comando falhar, verifique se o serviço do **windbindd** está rodando e que as configurações no arquivo **smb.conf** estão corretas.
+
+## Utilizando usuários e grupos do domínio em comandos do sistema operacional
+
+### Buscando por usuários e grupos do domínio
+
+A lib *libnss_winbind* permite a busca de usuários e grupos do domínio, por exemplo:  
+- Para buscar o usuário de domínio *SAMDOM\demo01*, execute:
+  ```console
+  getent passwd SAMDOM\\demo01
+  ```
+  Que resultará em um output semelhante a:
+  ```console
+  SAMDOM\demo01:*:10000:10000:demo01:/home/demo01:/bin/bash
+  ```
+- Para buscar o grupo do domínio *Domain Users*, execute:
+  ```console
+  getent group "SAMDOM\\Domain Users"
+  ```
+  Que resultará em um output semelhante a:
+  ```console
+  SAMDOM\domain users:x:10000:
+  ```
+### Designando permissões de arquivo para usuários e grupos do domínio
+
+A lib **NSS** permite que se utilize contas e grupos do domínio em comandos. Por exemplo, para determinar a propriedade de um arquivo para o usuário de domínio *demo01*, e o grupo para o grupo de domínio *Domain Users*, execute:
+```console
+chown "SAMDOM\\demo01:SAMDOM\\domain users" file.txt
+```
