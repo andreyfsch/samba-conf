@@ -14,7 +14,7 @@ A seguir, serão fornecidas as instruções para levantar um Samba como DC e con
 - Certifique-se de que o arquivo /etc/hosts contém o fully-qualified domain name (FQDN) e o hostname curto do endereço IP da LAN do DC. Por exemplo:
   ```
   127.0.0.1     localhost  
-  143.54.0.1     DC1.samdom.sbcb.inf.ufrgs.br     DC1
+  143.54.0.1     DC1.smb.sbcb.inf.ufrgs.br     DC1
   ```
   O hostname e o FQDN não devem apontar para **127.0.0.1** ou para nenhum outro endereço além daquele usado na interface LAN do DC;
 - Remova qualquer instância prévia do arquivo **smb.conf**. Para listar o caminho do arquivo:
@@ -56,7 +56,7 @@ sudo apt install acl attr samba winbind libpam-winbind libnss-winbind \
 Sendo que o Kerberos realm no nosso exemplo seria:
 
 ```
-SAMDOM.SBCB.INF.UFRGS.BR
+SMB.SBCB.INF.UFRGS.BR
 ```
 
 E o hostname solicitado para o servidor Kerberos e para o servidor administrativo no nosso exemplo seria:
@@ -77,11 +77,11 @@ samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_I
 ## Configurando o DNS resolver
 
 Edite o arquivo **/etc/resolv.conf** e insira as linhas abaixo.  
-Substitua *143.54.0.1* pelo endereço IP do DC:
+Substitua *143.54.50.96* pelo endereço IP do DC:
 
 ```
-search samdom.sbcb.inf.ufrgs.br
-nameserver 143.54.0.1
+search smb.sbcb.inf.ufrgs.br
+nameserver 143.54.50.96
 ```
 
 ## Criando uma zona reversa
@@ -89,14 +89,14 @@ nameserver 143.54.0.1
 Para criar uma zona de pesquia reversa, execute:
 
 ```console
-samba-tool dns zonecreate 143.54.0.1 0.54.143.in-addr.arpa -U Administrator
+samba-tool dns zonecreate 143.54.50.96 50.54.143.in-addr.arpa -U Administrator
 ```
 O Samba deve estar iniciado para que a criação de zona seja executada.  
 
 Crie o registro PTR de DNS (reverso) para o novo DC:
 
 ```console
-samba-tool dns add 143.54.0.1 0.54.143.in-addr.arpa 1 PTR dc1.samdom.sbcb.inf.ufrgs.br -U Administrator
+samba-tool dns add 143.54.50.96 50.54.143.in-addr.arpa 1 PTR dc1.smb.sbcb.inf.ufrgs.br -U Administrator
 ```
 
 ## Configurando o Kerberos
@@ -160,35 +160,35 @@ Para verificar que o DNS do AD foi configurado corretamente, execute algumas que
 
 - Registro SRV *_ldap* tcp-based do domínio:
   ```console
-  host -t SRV _ldap._tcp.samdom.sbcb.inf.ufrgs.br.
+  host -t SRV _ldap._tcp.smb.sbcb.inf.ufrgs.br.
   ```
   Exemplo de output esperado:  
   ```console
-  _ldap._tcp.samdom.sbcb.inf.ufrgs.br has SRV record 0 100 389 dc1.samdom.sbcb.inf.ufrgs.br.
+  _ldap._tcp.smb.sbcb.inf.ufrgs.br has SRV record 0 100 389 dc1.smb.sbcb.inf.ufrgs.br.
   ```
 - Registro SRV *_kerberos* udp-based do domínio:
   ```console
-  host -t SRV _kerberos._tcp.samdom.sbcb.inf.ufrgs.br.
+  host -t SRV _kerberos._tcp.smb.sbcb.inf.ufrgs.br.
   ```
   Exemplo de output esperado:  
   ```console
-  _kerberos._udp.samdom.sbcb.inf.ufrgs.br has SRV record 0 100 88 dc1.samdom.sbcb.inf.ufrgs.br.
+  _kerberos._udp.smb.sbcb.inf.ufrgs.br has SRV record 0 100 88 dc1.smb.sbcb.inf.ufrgs.br.
   ```
 - Registro A do DC:
   ```console
-  host -t A dc1.samdom.sbcb.inf.ufrgs.br.
+  host -t A dc1.smb.sbcb.inf.ufrgs.br.
   ```
   Exemplo de output esperado:  
   ```console
-  dc1.samdom.sbcb.inf.ufrgs.br has address 143.54.0.1
+  dc1.smb.sbcb.inf.ufrgs.br has address 143.54.50.96
   ```
 - Registro PTR do DC:
   ```console
-  host -t PTR 143.54.0.1.
+  host -t PTR 143.54.50.96.
   ```
   Exemplo de output esperado:  
   ```console
-  1.0.54.143.in-addr.arpa domain name pointer dc1.samdom.sbcb.inf.ufrgs.br
+  96.50.54.143.in-addr.arpa domain name pointer dc1.smb.sbcb.inf.ufrgs.br
   ```
 
 ## Verificando o Kerberos
@@ -200,7 +200,7 @@ Execute:
 kinit administrator
 ```
 Será solicitada a senha do administrador no formato:  
-```Password for administrator@SAMDOM.SBCB.INF.UFRGS.BR:```
+```Password for administrator@SMB.SBCB.INF.UFRGS.BR:```
 
 Após, liste os tíquetes Kerberos em cache executando:
 
@@ -210,10 +210,10 @@ klist
 Exemplo de output esperado:  
 ```console
 Ticket cache: FILE:/tmp/krb5cc_0  
-Default principal: administrator@SAMDOM.SBCB.INF.UFRGS.BR  
+Default principal: administrator@SMB.SBCB.INF.UFRGS.BR  
   
   Valid starting       Expires              Service principal  
-  01.11.2016 08:45:00  12.11.2016 18:45:00  krbtgt/SAMDOM.SBCB.INF.UFRGS.BR@SAMDOM.SBCB.INF.UFRGS.BR  
+  01.11.2016 08:45:00  12.11.2016 18:45:00  krbtgt/SMB.SBCB.INF.UFRGS.BR@SMB.SBCB.INF.UFRGS.BR  
   renew until 02.11.2016 08:44:59
 ```
 
@@ -303,15 +303,15 @@ Se o ambiente possuir um servidor DHCP provendo configurações DNS para os comp
 Configurando manualmente o cliente para utilizar o servidor DNS:
 - Edite o arquivo **/etc/resolv.conf** com o endereço IP do servidor DNS e com o nome do domínio:
   ```
-  nameserver 143.54.0.1
-  search samdom.sbcb.inf.ufrgs.br
+  nameserver 143.54.50.96
+  search smb.sbcb.inf.ufrgs.br
   ```
 - Alguns utilitários, como NetworkManager podem sobrescrever mudanças manuais no arquivo **etc/resolv.conf**.  
   No caso do NetworkManager, configure o servidor DNS via GUI ou nmcli e reinicie o serviço do NetworkManager.
   Para realizar o procedimento via nmcli, execute:
   ```console
   nmcli connection modify $(nmcli --terse --fields NAME connection show --active | head -n 1) ipv4.ignore-auto-dns yes \
-   ipv4.dns-search samdom.sbcb.inf.ufrgs.br ipv4.dns 143.54.0.1
+   ipv4.dns-search smb.sbcb.inf.ufrgs.br ipv4.dns 143.54.50.96
   systemctl restart NetworkManager
   ```
 
@@ -319,34 +319,34 @@ Configurando manualmente o cliente para utilizar o servidor DNS:
 Execute:
 - Forward lookup:
   ```console
-  nslookup DC1.samdom.sbcb.inf.ufrgs.br
+  nslookup DC1.smb.sbcb.inf.ufrgs.br
   ```
   Deve ter um output semelhante a:
   ```console
-  Server:         143.54.0.1
-  Address:        143.54.0.1#53
+  Server:         143.54.50.96
+  Address:        143.54.50.100#53
   
-  Name:   DC1.samdom.sbcb.inf.ufrgs.br
-  Address: 143.54.0.1
+  Name:   DC1.smb.sbcb.inf.ufrgs.br
+  Address: 143.54.50.96
   ```
 - Reverse lookup:
   ```console
-  nslookup 143.54.0.1
+  nslookup 143.54.50.96
   ```
   Deve ter um output semelhante a:
   ```console
-  Server:        143.54.0.1
+  Server:        143.54.50.96
   Address:	10.99.0.1#53
 
-  1.0.54.143.in-addr.arpa	name = DC1.samdom.sbcb.inf.ufrgs.br.
+  96.50.54.143.in-addr.arpa	name = DC1.smb.sbcb.inf.ufrgs.br.
   ```
 - Registros SRV:
   ```console
-  host -t SRV _ldap._tcp.samdom.sbcb.inf.ufrgs.br
+  host -t SRV _ldap._tcp.smb.sbcb.inf.ufrgs.br
   ```
   Deve ter um output semelhante a:
   ```console
-  _ldap._tcp.samdom.sbcb.inf.ufrgs.br has SRV record 0 100 389 dc1.samdom.sbcb.inf.ufrgs.br.
+  _ldap._tcp.smb.sbcb.inf.ufrgs.br has SRV record 0 100 389 dc1.smb.sbcb.inf.ufrgs.br.
   ```
 ### Configuração do Kerberos
 
@@ -388,7 +388,7 @@ getent hosts M1
 ```
 O output deve ser semelhante a:
 ```console
-143.54.0.5      M1.samdom.sbcb.inf.ufrgs.br    M1
+143.54.50.100      M1.smb.sbcb.inf.ufrgs.br    M1
 ```
 Certifique-se de que o arquivo **/etc/hosts** contém apenas a linha:
 ```console
@@ -429,7 +429,7 @@ Já que a sessão *[global]* do arquivo **smb.conf** do nosso repo já possui a 
 Vamos mapear o usuário de domínio *Administartor* para o usuário local *root*, executando:
 
 ```console
-echo "!root = SAMDOM\Administrator" >> /usr/local/samba/etc/user.map
+echo "!root = SMB\Administrator" >> /usr/local/samba/etc/user.map
 ```
 
 ## Ingressando o host no domínio
@@ -437,7 +437,7 @@ echo "!root = SAMDOM\Administrator" >> /usr/local/samba/etc/user.map
 Para ingressar o host no AD, execute:
 
 ```console
-samba-tool domain join samdom.sbcb.inf.ufrgs.br MEMBER -U administrator
+samba-tool domain join smb.sbcb.inf.ufrgs.br MEMBER -U administrator
 ```
 
 Entre com a senha do usuário *Administrator* a seguir.  
@@ -475,7 +475,7 @@ wbinfo --ping-dc
 ```
 Que deve ter um output semelhante a:
 ```console
-checking the NETLOGON for domain[SAMDOM] dc connection to "DC.SAMDOM.SBCB.INF.UFRGS.BR" succeeded
+checking the NETLOGON for domain[SAMDOM] dc connection to "DC.SMB.SBCB.INF.UFRGS.BR" succeeded
 ```
 Se o comando falhar, verifique se o serviço do **windbindd** está rodando e que as configurações no arquivo **smb.conf** estão corretas.
 
@@ -484,25 +484,25 @@ Se o comando falhar, verifique se o serviço do **windbindd** está rodando e qu
 ### Buscando por usuários e grupos do domínio
 
 A lib *libnss_winbind* permite a busca de usuários e grupos do domínio, por exemplo:  
-- Para buscar o usuário de domínio *SAMDOM\demo01*, execute:
+- Para buscar o usuário de domínio *SMB\demo01*, execute:
   ```console
-  getent passwd SAMDOM\\demo01
+  getent passwd SMB\\demo01
   ```
   Que resultará em um output semelhante a:
   ```console
-  SAMDOM\demo01:*:10000:10000:demo01:/home/demo01:/bin/bash
+  SMB\demo01:*:10000:10000:demo01:/home/demo01:/bin/bash
   ```
 - Para buscar o grupo do domínio *Domain Users*, execute:
   ```console
-  getent group "SAMDOM\\Domain Users"
+  getent group "SMB\\Domain Users"
   ```
   Que resultará em um output semelhante a:
   ```console
-  SAMDOM\domain users:x:10000:
+  SMB\domain users:x:10000:
   ```
 ### Designando permissões de arquivo para usuários e grupos do domínio
 
 A lib **NSS** permite que se utilize contas e grupos do domínio em comandos. Por exemplo, para determinar a propriedade de um arquivo para o usuário de domínio *demo01*, e o grupo para o grupo de domínio *Domain Users*, execute:
 ```console
-chown "SAMDOM\\demo01:SAMDOM\\domain users" file.txt
+chown "SMB\\demo01:SAMDOM\\domain users" file.txt
 ```
