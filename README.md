@@ -6,7 +6,7 @@ A seguir, serão fornecidas as instruções para levantar um Samba como DC e con
 ## Preparando o ambiente
 
 - Definia um domínio DNS para a floresta AD:
-  - A utilização do domínio top-level da organização não é recomendável, sendo prudente a seleção de um subdomínio. Por exemplo: considerando o domínio top-level SBCB.INF.UFRGS.BR, um domínio possível para a floresta AD seria SAMDOM.SBCB.INF.UFRGS.BR;
+  - A utilização do domínio top-level da organização não é recomendável, sendo prudente a seleção de um subdomínio. Por exemplo: considerando o domínio top-level SBCB.INF.UFRGS.BR, um domínio possível para a floresta AD seria SMB.SBCB.INF.UFRGS.BR;
 - Defina de um hostname para o AD DC que deve ter menos de 15 caracteres. Por exemplo: DC1;
 - Configure um IP estático para o DC e reserve o endereço associado no roteador;
   - **Importante:** o DC se tornará o DNS resolver para todos computadores que ingressarem no domínio. Como resultado, pode ser exigido que o endereço IP esteja fora do pool DHCP do roteador.
