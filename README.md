@@ -217,8 +217,47 @@ Default principal: administrator@SAMDOM.SBCB.INF.UFRGS.BR
   renew until 02.11.2016 08:44:59
 ```
 
-# Autenticação de usuários de domínio utilizando PAM
+## Autenticação de usuários de domínio utilizando PAM
 Para permitir que usuários de domínio se loguem localmente ou se autentiquem em serviços instalados no membro do domínio, como SSH, o PAM deve ser capaz de utilizar o módulo *pam_winbind*.
+
+### Configurando os parâmetros do Windbindd no smb.conf
+
+Adicione as seguintes linhas na sessão **[global]** do arquivo *smb.conf*:
+```console
+template shell = /bin/bash
+template homedir = /home/%U
+```
+
+### Localizando e configurando a lib libnss_winbind.so.2
+Para localizar a lib que será configurada, execute:
+```console
+smbd -b | grep LIBDIR
+```
+Que resultará em um output semelhante a:
+```console
+LIBDIR: /usr/local/samba/lib/
+```
+A seguir, faça os links simbólicos que seguem e execute o comando **ldconfig**. Execute (utilizando o path obtido anteriormente):
+```console
+ln -s /usr/local/samba/lib/libnss_winbind.so.2 /lib/x86_64-linux-gnu/
+ln -s /lib/x86_64-linux-gnu/libnss_winbind.so.2 /lib/x86_64-linux-gnu/libnss_winbind.so
+ldconfig
+```
+
+### Configurando o Name Service Switch (NSS)
+
+É necessário configurar o NSS para que usuários e grupos do domínio estejam disponíveis localmente.  
+Edite o arquivo **/etc/nsswitch.conf**, adicionando *windbind* nos databases **passwd** e **group**, da seguinte maneira:
+```console
+passwd: files winbind
+group:  files winbind
+```
+
+Não utilize nomes de usuários iguais no domínio e no arquivo **/etc/passwd** local.
+
+### Serviço Winbindd
+
+Não inicialize manualmente o serviço **winbindd** no DC AD
 
 
   
