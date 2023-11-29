@@ -14,7 +14,7 @@ A seguir, serão fornecidas as instruções para levantar um Samba como DC e con
 - Certifique-se de que o arquivo /etc/hosts contém o fully-qualified domain name (FQDN) e o hostname curto do endereço IP da LAN do DC. Por exemplo:
   ```
   127.0.0.1     localhost  
-  143.54.0.1     DC1.smb.sbcb.inf.ufrgs.br     DC1
+  143.54.50.96     DC1.smb.sbcb.inf.ufrgs.br     DC1
   ```
   O hostname e o FQDN não devem apontar para **127.0.0.1** ou para nenhum outro endereço além daquele usado na interface LAN do DC;
 - Remova qualquer instância prévia do arquivo **smb.conf**. Para listar o caminho do arquivo:
