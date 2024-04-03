@@ -310,7 +310,7 @@ Configurando manualmente o cliente para utilizar o servidor DNS:
   No caso do NetworkManager, configure o servidor DNS via GUI ou nmcli e reinicie o serviço do NetworkManager.
   Para realizar o procedimento via nmcli, execute:
   ```console
-  nmcli connection modify $(nmcli --terse --fields NAME connection show --active | head -n 1) ipv4.ignore-auto-dns yes \
+  nmcli connection modify "$(nmcli --terse --fields NAME connection show --active | head -n 1)" ipv4.ignore-auto-dns yes \
    ipv4.dns-search smb.sbcb.inf.ufrgs.br ipv4.dns 143.54.50.96
   systemctl restart NetworkManager
   ```
