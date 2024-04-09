@@ -71,7 +71,7 @@ Para provisionar o AD, utilizaremos o utilitário **samba-tool**.
 Substitua *PASSWORD* pela senha do administrador:
 
 ```console
-samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_INTERNAL --realm=SMB.SBCB.INF.UFRGS.BR --domain=SMB --adminpass=sbcb@SMB!
+samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_INTERNAL --realm=SMB.SBCB.INF.UFRGS.BR --domain=SMB --adminpass=PASSWORD
 ```
 
 ## Configurando o DNS resolver
