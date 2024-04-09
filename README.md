@@ -14,7 +14,7 @@ A seguir, serão fornecidas as instruções para levantar um Samba como DC e con
 - Certifique-se de que o arquivo /etc/hosts contém o fully-qualified domain name (FQDN) e o hostname curto do endereço IP da LAN do DC. Por exemplo:
   ```
   127.0.0.1     localhost  
-  143.54.50.96     DC1.smb.sbcb.inf.ufrgs.br     DC1
+  143.54.48.16     DC1.smb.sbcb.inf.ufrgs.br     DC1
   ```
   O hostname e o FQDN não devem apontar para **127.0.0.1** ou para nenhum outro endereço além daquele usado na interface LAN do DC;
 - Remova qualquer instância prévia do arquivo **smb.conf**. Para listar o caminho do arquivo:
@@ -77,11 +77,11 @@ samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_I
 ## Configurando o DNS resolver
 
 Edite o arquivo **/etc/resolv.conf** e insira as linhas abaixo.  
-Substitua *143.54.50.96* pelo endereço IP do DC:
+Substitua *143.54.48.16* pelo endereço IP do DC:
 
 ```
 search smb.sbcb.inf.ufrgs.br
-nameserver 143.54.50.96
+nameserver 143.54.48.16
 ```
 
 ## Criando uma zona reversa
@@ -89,14 +89,14 @@ nameserver 143.54.50.96
 Para criar uma zona de pesquia reversa, execute:
 
 ```console
-samba-tool dns zonecreate 143.54.50.96 50.54.143.in-addr.arpa -U Administrator
+samba-tool dns zonecreate 143.54.48.16 48.54.143.in-addr.arpa -U Administrator
 ```
 O Samba deve estar iniciado para que a criação de zona seja executada.  
 
 Crie o registro PTR de DNS (reverso) para o novo DC:
 
 ```console
-samba-tool dns add 143.54.50.96 50.54.143.in-addr.arpa 1 PTR dc1.smb.sbcb.inf.ufrgs.br -U Administrator
+samba-tool dns add 143.54.48.16 48.54.143.in-addr.arpa 1 PTR dc1.smb.sbcb.inf.ufrgs.br -U Administrator
 ```
 
 ## Configurando o Kerberos
@@ -180,11 +180,11 @@ Para verificar que o DNS do AD foi configurado corretamente, execute algumas que
   ```
   Exemplo de output esperado:  
   ```console
-  dc1.smb.sbcb.inf.ufrgs.br has address 143.54.50.96
+  dc1.smb.sbcb.inf.ufrgs.br has address 143.54.48.16
   ```
 - Registro PTR do DC:
   ```console
-  host -t PTR 143.54.50.96.
+  host -t PTR 143.54.48.16.
   ```
   Exemplo de output esperado:  
   ```console
@@ -304,7 +304,8 @@ Se o ambiente possuir um servidor DHCP provendo configurações DNS para os comp
 Configurando manualmente o cliente para utilizar o servidor DNS:
 - Edite o arquivo **/etc/resolv.conf** com o endereço IP do servidor DNS e com o nome do domínio:
   ```
-  nameserver 143.54.50.96
+  nameserver 143.54.48.16
+  nameserver 8.8.8.8
   search smb.sbcb.inf.ufrgs.br
   ```
 - Alguns utilitários, como NetworkManager podem sobrescrever mudanças manuais no arquivo **etc/resolv.conf**.  
@@ -329,22 +330,22 @@ Execute:
   ```
   Deve ter um output semelhante a:
   ```console
-  Server:         143.54.50.96
+  Server:         143.54.48.16
   Address:        143.54.50.100#53
   
   Name:   DC1.smb.sbcb.inf.ufrgs.br
-  Address: 143.54.50.96
+  Address: 143.54.48.16
   ```
 - Reverse lookup:
   ```console
-  nslookup 143.54.50.96
+  nslookup 143.54.48.16
   ```
   Deve ter um output semelhante a:
   ```console
-  Server:        143.54.50.96
+  Server:        143.54.48.16
   Address:	10.99.0.1#53
 
-  96.50.54.143.in-addr.arpa	name = DC1.smb.sbcb.inf.ufrgs.br.
+  16.48.54.143.in-addr.arpa	name = DC1.smb.sbcb.inf.ufrgs.br.
   ```
 - Registros SRV:
   ```console
