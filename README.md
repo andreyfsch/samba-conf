@@ -482,9 +482,9 @@ sudo winbindd
 ```
 Não inicialize o serviço **samba** no membro do domínio, este serviço deve ser inicializado somente no AD DC.
 
-## Testando a conectividade do Windbindd
+## Testando a conectividade do Winbindd
 
-### Enviando um Ping Windbindd
+### Enviando um Ping Winbindd
 
 Para verificar que um serviço windbindd pode se conectar aos AD DC, execute:
 ```console
@@ -494,7 +494,7 @@ Que deve ter um output semelhante a:
 ```console
 checking the NETLOGON for domain[SAMDOM] dc connection to "DC.SMB.SBCB.INF.UFRGS.BR" succeeded
 ```
-Se o comando falhar, verifique se o serviço do **windbindd** está rodando e que as configurações no arquivo **smb.conf** estão corretas.
+Se o comando falhar, verifique se o serviço do **winbindd** está rodando e que as configurações no arquivo **smb.conf** estão corretas.
 
 ## Modificando o greeter do sistema operacional para login no startup
 ```console
