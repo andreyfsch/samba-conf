@@ -247,10 +247,11 @@ ldconfig
 ### Configurando o Name Service Switch (NSS)
 
 É necessário configurar o NSS para que usuários e grupos do domínio estejam disponíveis localmente.  
-Edite o arquivo **/etc/nsswitch.conf**, adicionando *windbind* nos databases **passwd** e **group**, da seguinte maneira:
+Edite o arquivo **/etc/nsswitch.conf**, adicionando *windbind* nos databases **passwd** e **group**, além de alterar a ordem da diretiva *dns* na database **hosts** da seguinte maneira:
 ```console
 passwd: files winbind
 group:  files winbind
+hosts:  files dns mdns4_minimal [NOTFOUND=return] myhostname
 ```
 
 Não utilize nomes de usuários iguais no domínio e no arquivo **/etc/passwd** local.
@@ -307,12 +308,17 @@ Configurando manualmente o cliente para utilizar o servidor DNS:
   search smb.sbcb.inf.ufrgs.br
   ```
 - Alguns utilitários, como NetworkManager podem sobrescrever mudanças manuais no arquivo **etc/resolv.conf**.  
-  No caso do NetworkManager, configure o servidor DNS via GUI ou nmcli e reinicie o serviço do NetworkManager.
-  Para realizar o procedimento via nmcli, execute:
+  No caso do NetworkManager, altere na sessão *[main]* do arquivo **/etc/NetworkManager/NetworkManager.conf** a diretiva *dns*, setando o valor para *none*.
+  Um exemplo de sessão *[main]* para o arquivo seria:
+  ```
+  [main]
+  plugins=ifupdown,keyfile
+  dns=none
+  ```
+- Além disso, devemos desabilitar o serviço **systemd-resolved**, executando os seguintes comandos:
   ```console
-  nmcli connection modify "$(nmcli --terse --fields NAME connection show --active | head -n 1)" ipv4.ignore-auto-dns yes \
-   ipv4.dns-search smb.sbcb.inf.ufrgs.br ipv4.dns 143.54.50.96
-  sudo systemctl restart NetworkManager
+  sudo systemctl stop systemd-resolvd
+  sudo systemctl disable systemd-resolvd
   ```
 
 ### Testando a resolução DNS
@@ -354,7 +360,7 @@ Edite o arquivo **/etc/krb5.conf** com as seguintes diretivas:
 
 ```
 [libdefaults]
-  default_realm = SAMDOM.SBCB.INF.UFRGS.BR
+  default_realm = SMB.SBCB.INF.UFRGS.BR
   dns_lookup_realm = false
   dns_lookup_kdc = true
 [plugins]
@@ -371,10 +377,6 @@ Edite também o arquivo **/etc/security/pam_winbind.conf** com a seguinte direti
   krb5_auth = yes
   krb5_ccache_type = FILE
 ```
-Por fim, execute o comando:
-```console
-update-crypto-policies --set DEFAULT:AD-SUPPORT
-```
 
 ## Configurando a sincronização horária
 Instale o chrony seguindo as mesmas etapas [descritas anteriormente](configurando-o-serviço-de-sincronização-horária), porém não utilize o parâmetro *--enable-ntp-signd* na configuração.  
@@ -384,11 +386,11 @@ Após, substitua o arquivo **/etc/chrony/chrony.conf** pelo [arquivo indicado no
 Quando um host ingressa o domínio, o Samba tenta registrar o hostname na zona AD DNS. Para isso, o utilitário *net* precisa conseguir resolver o hostname utilizando DNS ou um registro correto no arquivo **/etc/hosts**.
 Para verificar que a resolução do hostname está correta, execute:
 ```console
-getent hosts M1
+getent hosts DM1
 ```
 O output deve ser semelhante a:
 ```console
-143.54.50.100      M1.smb.sbcb.inf.ufrgs.br    M1
+143.54.50.100      DM1.smb.sbcb.inf.ufrgs.br    DM1
 ```
 Certifique-se de que o arquivo **/etc/hosts** contém apenas a linha:
 ```console
@@ -442,26 +444,40 @@ samba-tool domain join smb.sbcb.inf.ufrgs.br MEMBER -U administrator
 
 Entre com a senha do usuário *Administrator* a seguir.  
 
-## Configurando o Name Service Switch (NSS)
+### Configurando o Name Service Switch (NSS)
 
 É necessário configurar o NSS para que usuários e grupos do domínio estejam disponíveis localmente.  
-Edite o arquivo **/etc/nsswitch.conf**, adicionando *windbind* nos databases **passwd** e **group**, da seguinte maneira:
+Edite o arquivo **/etc/nsswitch.conf**, adicionando *windbind* nos databases **passwd** e **group**, além de alterar a ordem da diretiva *dns* na database **hosts** da seguinte maneira:
 ```console
 passwd: files winbind
 group:  files winbind
+hosts:  files dns mdns4_minimal [NOTFOUND=return] myhostname
 ```
 
 Se houver uma linha contendo a diretiva **initgroups**, adicione ```[success=continue] winbind``` ao final, mas não crie uma linha com a diretiva se ela não existir.
 
 Não utilize nomes de usuários iguais no domínio e no arquivo **/etc/passwd** local.
 
+### Modidique o Kerberos start ID no PAM
+```console
+sudo sed -i 's/minimum_uid=1000/minimum_uid=10000/' /etc/pam.d/common-account
+sudo sed -i 's/minimum_uid=1000/minimum_uid=10000/' /etc/pam.d/common-auth
+sudo sed -i 's/minimum_uid=1000/minimum_uid=10000/' /etc/pam.d/common-password
+sudo sed -i 's/minimum_uid=1000/minimum_uid=10000/' /etc/pam.d/common-session
+sudo sed -i 's/minimum_uid=1000/minimum_uid=10000/' /etc/pam.d/common-session-noninteractive
+```
+Além disso, autorize a criação de diretórios home, executando o comando:
+```console
+sudo pam-auth-update --enable mkhomedir
+```
+
 ## Inicializando serviços do Samba
 
 Execute:
 ```console
-smbd
-nmdb
-winbind
+sudo smbd
+sudo nmbd
+sudo winbindd
 ```
 Não inicialize o serviço **samba** no membro do domínio, este serviço deve ser inicializado somente no AD DC.
 
@@ -478,6 +494,13 @@ Que deve ter um output semelhante a:
 checking the NETLOGON for domain[SAMDOM] dc connection to "DC.SMB.SBCB.INF.UFRGS.BR" succeeded
 ```
 Se o comando falhar, verifique se o serviço do **windbindd** está rodando e que as configurações no arquivo **smb.conf** estão corretas.
+
+## Modificando o greeter do sistema operacional para login no startup
+```console
+sudo apt install lightdm-gtk-greeter
+sudo apt purge slick-greeter
+```
+Reinicie o sistema após esta operação e faça login com um usuário *SMB\user*.
 
 ## Utilizando usuários e grupos do domínio em comandos do sistema operacional
 
